@@ -1,9 +1,11 @@
 namespace Ensek.PeteForrest.Domain {
-    public class Account(string? firstName, string? lastName) {
+    public class Account {
         public int AccountId { get; set; }
 
-        public string? FirstName { get; set; } = firstName;
+        public string? FirstName { get; set; }
 
-        public string? LastName { get; set; } = lastName;
+        public string? LastName { get; set; }
+
+        public ICollection<MeterReading> MeterReadings { get; set; } = default!;
     }
 }

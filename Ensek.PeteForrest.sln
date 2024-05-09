@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensek.PeteForrest.Domain", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensek.PeteForrest.Services", "Ensek.PeteForrest.Services\Ensek.PeteForrest.Services.csproj", "{7E08CA19-F3DB-4BB2-B4E4-2D7E711ACD93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensek.PeteForrest.Api.Tests", "Ensek.PeteForrest.Api.Tests\Ensek.PeteForrest.Api.Tests.csproj", "{2ED81C84-6FD9-41B1-AD22-6733D31937E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{7E08CA19-F3DB-4BB2-B4E4-2D7E711ACD93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E08CA19-F3DB-4BB2-B4E4-2D7E711ACD93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E08CA19-F3DB-4BB2-B4E4-2D7E711ACD93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ED81C84-6FD9-41B1-AD22-6733D31937E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ED81C84-6FD9-41B1-AD22-6733D31937E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ED81C84-6FD9-41B1-AD22-6733D31937E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ED81C84-6FD9-41B1-AD22-6733D31937E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

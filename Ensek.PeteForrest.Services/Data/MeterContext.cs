@@ -1,7 +1,8 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace Ensek.PeteForrest.Api.Data {
+namespace Ensek.PeteForrest.Services.Data
+{
     public class MeterContext : DbContext
     {
         public MeterContext(DbContextOptions<MeterContext> options) : base(options)
