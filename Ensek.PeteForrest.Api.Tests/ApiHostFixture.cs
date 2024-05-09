@@ -1,5 +1,4 @@
 ﻿using System.Data.Common;
-using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;

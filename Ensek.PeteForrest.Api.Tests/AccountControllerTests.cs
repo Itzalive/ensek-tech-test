@@ -6,7 +6,7 @@ namespace Ensek.PeteForrest.Api.Tests {
     public class AccountControllerTests(ApiHostFixture apiHostFixture) : IClassFixture<ApiHostFixture>
     {
         [Fact]
-        public async Task Test1()
+        public async Task CanReturnAccountsList()
         {
             var response = await apiHostFixture.Client.GetAsync("Account");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);

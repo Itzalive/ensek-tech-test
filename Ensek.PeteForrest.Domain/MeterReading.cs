@@ -7,5 +7,13 @@
         public DateTime DateTime { get; set; }
 
         public int Value { get; set; }
+
+        public static bool TryParseValue(string value, out int result)
+        {
+            if (value.Length == 5 && value.All(char.IsNumber)) return int.TryParse(value, out result);
+
+            result = 0;
+            return false;
+        }
     }
 }
