@@ -1,3 +1,4 @@
+using System.Globalization;
 using Ensek.PeteForrest.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +15,7 @@ public class MeterReadingController(IMeterReadingService meterReadingService) : 
         var failures = 0;
         foreach (var record in meterReadingLines)
         {
-            if (DateTime.TryParse(record.MeterReadingDateTime, out var readingDateTime) &&
+            if ((DateTime.TryParse(record.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"), out var readingDateTime) || DateTime.TryParse(record.MeterReadingDateTime, CultureInfo.InvariantCulture, out readingDateTime)) &&
                 await meterReadingService.TryAddReadingAsync(record.AccountId, record.MeterReadValue, readingDateTime))
                 successes++;
             else

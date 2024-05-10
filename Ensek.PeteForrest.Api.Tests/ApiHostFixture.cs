@@ -13,7 +13,7 @@ namespace Ensek.PeteForrest.Api.Tests {
     public class ApiHostFixture : IDisposable {
         private TestServer? server;
 
-        private HttpClient client;
+        private HttpClient? client;
 
         public MeterContext Context { get; }
 
@@ -37,7 +37,7 @@ namespace Ensek.PeteForrest.Api.Tests {
 
         private DbConnection? _connection;
 
-        public TestServer? Server {
+        public TestServer Server {
             get {
                 // try early return if available
                 if (this.server != null)
@@ -55,7 +55,7 @@ namespace Ensek.PeteForrest.Api.Tests {
             }
         }
 
-        private TestServer? BuildServer() {
+        private TestServer BuildServer() {
             var builder = WebHost.CreateDefaultBuilder(null!).UseStartup<Startup>();
 
             builder.ConfigureAppConfiguration(
