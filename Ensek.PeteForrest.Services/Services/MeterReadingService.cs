@@ -1,5 +1,8 @@
-﻿using Ensek.PeteForrest.Domain;
+﻿using System.Globalization;
+
+using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Services.Model;
 
 namespace Ensek.PeteForrest.Services.Services
 {
@@ -8,15 +11,20 @@ namespace Ensek.PeteForrest.Services.Services
         IMeterReadingRepository meterReadingRepository)
     : IMeterReadingService
     {
-        public async Task<bool> TryAddReadingAsync(int accountId, string value, DateTime dateTime)
+        public async Task<bool> TryAddReadingAsync(MeterReadingLine reading)
         {
-            var account = await accountRepository.GetAsync(accountId);
+            var account = await accountRepository.GetAsync(reading.AccountId);
             if (account == null) return false;
 
-            // Parse the reading value
-            if (!MeterReading.TryParseValue(value, out var intValueResult))
+            // Parse DateTime
+            if (!DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"), out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.InvariantCulture, out dateTime))
                 return false;
 
+            // Parse the reading value
+            if (!MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
+                return false;
+
+                    
             // Check for duplicates
             if (account.MeterReadings?.Any(r => r.Value == intValueResult && r.DateTime == dateTime) ?? false)
                 return false;

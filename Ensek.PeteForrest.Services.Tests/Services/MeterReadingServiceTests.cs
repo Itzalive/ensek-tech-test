@@ -1,5 +1,6 @@
 using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Services.Model;
 using Ensek.PeteForrest.Services.Services;
 using Moq;
 
@@ -15,7 +16,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
 
-            var result = await service.TryAddReadingAsync(1, "12345", DateTime.UtcNow);
+            var result = await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = DateTime.UtcNow.ToString()});
 
             Assert.True(result);
             meterReadingRepositoryMock.Verify(m => m.Add(It.IsAny<MeterReading>()));
@@ -29,7 +30,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult((Account?)null));
 
-            var result = await service.TryAddReadingAsync(1, "12345", DateTime.UtcNow);
+            var result = await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = DateTime.UtcNow.ToString()});
 
             Assert.False(result);
             meterReadingRepositoryMock.VerifyNoOtherCalls();
@@ -50,7 +51,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
 
-            var result = await service.TryAddReadingAsync(1, value, DateTime.UtcNow);
+            var result = await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = value, MeterReadingDateTime = DateTime.UtcNow.ToString()});
 
             Assert.False(result);
             meterReadingRepositoryMock.VerifyNoOtherCalls();
@@ -66,7 +67,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
 
             var result =
-                await service.TryAddReadingAsync(1, existingReading.Value.ToString(), existingReading.DateTime);
+                await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.ToString()});
 
             Assert.False(result);
             meterReadingRepositoryMock.VerifyNoOtherCalls();
@@ -82,8 +83,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
 
             var result =
-                await service.TryAddReadingAsync(1, existingReading.Value.ToString(),
-                    existingReading.DateTime.AddDays(1));
+                await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.AddDays(1).ToString()});
             
             Assert.True(result);
             meterReadingRepositoryMock.Verify(m => m.Add(It.IsAny<MeterReading>()));
@@ -99,8 +99,24 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
 
             var result =
-                await service.TryAddReadingAsync(1, existingReading.Value.ToString(),
-                    existingReading.DateTime.AddDays(-1));
+                await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.AddDays(-1).ToString()});
+
+            Assert.False(result);
+            meterReadingRepositoryMock.VerifyNoOtherCalls();
+        }
+
+        [Theory]
+        [InlineData("NOT A DATE")]
+        [InlineData("22/04/2019 09:25:25:25")]
+        public async Task InvalidDatetime_ReturnsFailure(string dateTime)
+        {
+            var accountRepositoryMock = new Mock<IAccountRepository>();
+            var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
+            var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
+            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
+            
+            var result =
+                    await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = dateTime});
 
             Assert.False(result);
             meterReadingRepositoryMock.VerifyNoOtherCalls();

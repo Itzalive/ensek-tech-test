@@ -1,6 +1,8 @@
-﻿namespace Ensek.PeteForrest.Services.Services;
+﻿using Ensek.PeteForrest.Services.Model;
+
+namespace Ensek.PeteForrest.Services.Services;
 
 public interface IMeterReadingService
 {
-    public Task<bool> TryAddReadingAsync(int accountId, string value, DateTime dateTime);
+    public Task<bool> TryAddReadingAsync(MeterReadingLine reading);
 }

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
-using Ensek.PeteForrest.Api.Controllers;
 using Ensek.PeteForrest.Domain;
+using Ensek.PeteForrest.Services.Model;
 using Newtonsoft.Json;
 
 namespace Ensek.PeteForrest.Api.Tests;

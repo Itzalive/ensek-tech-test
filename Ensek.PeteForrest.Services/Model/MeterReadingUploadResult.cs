@@ -1,3 +1,4 @@
-namespace Ensek.PeteForrest.Api.Controllers {
+namespace Ensek.PeteForrest.Services.Model
+{
     public record MeterReadingUploadResult(int NumberOfSuccessfulReadings, int NumberOfFailedReadings);
 }

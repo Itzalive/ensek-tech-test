@@ -1,4 +1,5 @@
 using System.Globalization;
+using Ensek.PeteForrest.Services.Model;
 using Ensek.PeteForrest.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,22 +16,12 @@ public class MeterReadingController(IMeterReadingService meterReadingService) : 
         var failures = 0;
         foreach (var record in meterReadingLines)
         {
-            if ((DateTime.TryParse(record.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"), out var readingDateTime) || DateTime.TryParse(record.MeterReadingDateTime, CultureInfo.InvariantCulture, out readingDateTime)) &&
-                await meterReadingService.TryAddReadingAsync(record.AccountId, record.MeterReadValue, readingDateTime))
+            if (await meterReadingService.TryAddReadingAsync(record))
                 successes++;
             else
                 failures++;
         }
 
         return new MeterReadingUploadResult(successes, failures);
-    }
-
-    public record MeterReadingLine
-    {
-        public int AccountId { get; set; }
-
-        public string MeterReadingDateTime { get; set; }
-
-        public string MeterReadValue { get; set; }
     }
 }
