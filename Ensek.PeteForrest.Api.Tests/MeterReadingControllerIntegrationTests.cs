@@ -62,7 +62,7 @@ public class MeterReadingControllerIntegrationTests(ApiHostFixture apiHostFixtur
         var entity = new Account();
         apiHostFixture.Context.Accounts.Add(entity);
         await apiHostFixture.Context.SaveChangesAsync();
-        var stringContent = new StringContent($"AccountId,MeterReadingDateTime,MeterReadValue\r\n{entity.AccountId + 1},{"22/04/2019 09:25"},{"01002"}", MediaTypeHeaderValue.Parse("text/csv"));
+        var stringContent = new StringContent($"AccountId,MeterReadingDateTime,MeterReadValue\r\n{9999999},{"22/04/2019 09:25"},{"01002"}", MediaTypeHeaderValue.Parse("text/csv"));
         var response = await apiHostFixture.Client.PostAsync("meter-reading-uploads", stringContent);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

@@ -9,5 +9,7 @@ namespace Ensek.PeteForrest.Services.Data
         public Task<Account[]> GetAsync();
 
         public Task<Account?> GetAsync(int id);
+
+        public IQueryable<Account> Query { get; }
     }
 }

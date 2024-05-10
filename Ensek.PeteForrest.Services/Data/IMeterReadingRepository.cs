@@ -9,4 +9,6 @@ public interface IMeterReadingRepository
     Task<MeterReading[]> GetAsync();
 
     Task<MeterReading?> GetAsync(int id);
+
+    IQueryable<MeterReading> Query { get; }
 }

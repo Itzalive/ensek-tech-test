@@ -1,4 +1,3 @@
-using System.Globalization;
 using Ensek.PeteForrest.Services.Model;
 using Ensek.PeteForrest.Services.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +11,7 @@ public class MeterReadingController(IMeterReadingService meterReadingService) : 
     [HttpPost("meter-reading-uploads")]
     public async Task<MeterReadingUploadResult> UploadMeterReadingsAsync([FromBody] IEnumerable<MeterReadingLine> meterReadingLines)
     {
-        var successes = 0;
-        var failures = 0;
-        foreach (var record in meterReadingLines)
-        {
-            if (await meterReadingService.TryAddReadingAsync(record))
-                successes++;
-            else
-                failures++;
-        }
-
+        var (successes, failures) = await meterReadingService.TryAddReadingsAsync(meterReadingLines);
         return new MeterReadingUploadResult(successes, failures);
     }
 }

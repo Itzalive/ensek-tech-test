@@ -15,4 +15,6 @@ public class MeterReadingRepository(MeterContext context) : IMeterReadingReposit
     public Task<MeterReading?> GetAsync(int id) => _context.MeterReadings
         .Where(a => a.MeterReadingId == id)
         .SingleOrDefaultAsync();
+
+    public IQueryable<MeterReading> Query => _context.MeterReadings;
 }

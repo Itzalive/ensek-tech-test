@@ -12,8 +12,8 @@ public class MeterReadingControllerTests
     {
         var meterReadingService = new Mock<IMeterReadingService>();
         var controller = new MeterReadingController(meterReadingService.Object);
-        meterReadingService.Setup(m => m.TryAddReadingAsync(It.IsAny<MeterReadingLine>()))
-            .Returns(Task.FromResult(true));
+        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IEnumerable<MeterReadingLine>>()))
+            .Returns(Task.FromResult((1, 0)));
 
         var result = await controller.UploadMeterReadingsAsync([
             new MeterReadingLine
@@ -30,8 +30,8 @@ public class MeterReadingControllerTests
     {
         var meterReadingService = new Mock<IMeterReadingService>();
         var controller = new MeterReadingController(meterReadingService.Object);
-        meterReadingService.Setup(m => m.TryAddReadingAsync(It.IsAny<MeterReadingLine>()))
-            .Returns(Task.FromResult(false));
+        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IEnumerable<MeterReadingLine>>()))
+            .Returns(Task.FromResult((0, 1)));
 
         var result = await controller.UploadMeterReadingsAsync([
             new MeterReadingLine

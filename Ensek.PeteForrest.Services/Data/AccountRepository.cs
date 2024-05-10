@@ -16,4 +16,6 @@ public class AccountRepository(MeterContext context) : IAccountRepository
         .Include(a => a.MeterReadings)
         .Where(a => a.AccountId == id)
         .SingleOrDefaultAsync();
+
+    public IQueryable<Account> Query => _context.Accounts;
 }
