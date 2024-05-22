@@ -1,5 +1,6 @@
 using System.Globalization;
 using CsvHelper;
+using CsvHelper.Configuration;
 using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Data;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,7 @@ public static class DbInitializer
         using (var reader = new StreamReader(path))
         using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
         {
+            csv.Context.RegisterClassMap<AccountMap>();
             var records = csv.GetRecords<Account>();
             foreach (var record in records)
             {
@@ -49,6 +51,17 @@ public static class DbInitializer
                     $"INSERT INTO Accounts (AccountId, FirstName, LastName) values ({record.AccountId}, {record.FirstName}, {record.LastName});");
             }
         }
+
         context.SaveChanges();
+    }
+
+    public sealed class AccountMap : ClassMap<Account>
+    {
+        public AccountMap()
+        {
+            Map(m => m.AccountId);
+            Map(m => m.FirstName);
+            Map(m => m.LastName);
+        }
     }
 }

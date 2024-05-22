@@ -30,7 +30,9 @@ namespace Ensek.PeteForrest.Services.Services
             if (account.MeterReadings?.Any(r => r.DateTime >= dateTime) ?? false)
                 return false;
 
-            meterReadingRepository.Add(new MeterReading { Account = account, Value = intValueResult, DateTime = dateTime });
+            MeterReading meterReading = new MeterReading { Account = account, Value = intValueResult, DateTime = dateTime };
+            meterReadingRepository.Add(meterReading);
+            account.CurrentReading = meterReading;
             return true;
         }
 
@@ -38,20 +40,12 @@ namespace Ensek.PeteForrest.Services.Services
         public async Task<(int successes, int failures)> TryAddReadingsAsync(IEnumerable<MeterReadingLine> readings)
         {
             var requestedAccountIds = readings.Select(r => r.AccountId).ToArray();
-            var validAccounts = await accountRepository.Query.Where(a => requestedAccountIds.Contains(a.AccountId)).ToDictionaryAsync(a => a.AccountId);
-            var validAccountIds = validAccounts.Keys.ToArray();
+            var validAccounts = await accountRepository.Query.Include(a => a.CurrentReading).Where(a => requestedAccountIds.Contains(a.AccountId)).ToDictionaryAsync(a => a.AccountId);
 
-            var latestReadings = await meterReadingRepository.Query
-                .Where(r => validAccountIds.Contains(r.Account.AccountId))
-                .OrderByDescending(r => r.DateTime)
-                .GroupBy(r => r.Account.AccountId)
-                .Select(g => g.FirstOrDefault())
-                .ToDictionaryAsync(r => r.Account.AccountId);
-            
             var successes = 0;
             foreach (var reading in readings)
             {
-                if (!validAccountIds.Contains(reading.AccountId)) continue;
+                if (!validAccounts.ContainsKey(reading.AccountId)) continue;
 
                 // Parse DateTime
                 if (!DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"),
@@ -63,17 +57,17 @@ namespace Ensek.PeteForrest.Services.Services
                 if (!MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
                     continue;
 
+                var account = validAccounts[reading.AccountId];
+
                 // Confirm the reading is the newest reading
-                if (latestReadings.ContainsKey(reading.AccountId) &&
-                    latestReadings[reading.AccountId].DateTime >= dateTime)
+                if (account.CurrentReading != null && account.CurrentReading.DateTime >= dateTime)
                     continue;
 
-                var account = validAccounts[reading.AccountId];
                 var meterReading = new MeterReading {
                     Account = account, Value = intValueResult, DateTime = dateTime
                 };
-                latestReadings[reading.AccountId] = meterReading;
                 meterReadingRepository.Add(meterReading);
+                account.CurrentReading = meterReading;
                 successes++;
             }
 
