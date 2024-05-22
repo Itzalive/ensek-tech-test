@@ -2,6 +2,7 @@
 using System.Net.Http.Headers;
 using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Model;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace Ensek.PeteForrest.Api.Tests;
@@ -107,5 +108,31 @@ public class MeterReadingControllerIntegrationTests(ApiHostFixture apiHostFixtur
         Assert.NotNull(result);
         Assert.Equal(1, result.NumberOfSuccessfulReadings);
         Assert.Equal(1, result.NumberOfFailedReadings);
+    }
+
+
+    [Fact]
+    public async Task ReadsAndStoresValidCsv() {
+        var entity = new Account();
+        apiHostFixture.Context.Accounts.Add(entity);
+        await apiHostFixture.Context.SaveChangesAsync();
+        var stringContent = new StringContent($"AccountId,MeterReadingDateTime,MeterReadValue\r\n{entity.AccountId},{"22/04/2019 09:25"},{"01002"}", MediaTypeHeaderValue.Parse("text/csv"));
+        var response = await apiHostFixture.Client.PostAsync("meter-reading-uploads", stringContent);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var result = JsonConvert.DeserializeObject<MeterReadingUploadResult>(responseBody);
+        Assert.NotNull(result);
+        Assert.Equal(1, result.NumberOfSuccessfulReadings);
+        Assert.Equal(0, result.NumberOfFailedReadings);
+
+        var accountResult = apiHostFixture.Context.Accounts.Include(a => a.CurrentReading)
+                                                           .Include(a => a.MeterReadings)
+                                                           .SingleOrDefault(a => a.AccountId == entity.AccountId);
+        Assert.NotNull(accountResult);
+        Assert.NotNull(accountResult.CurrentReading);
+        Assert.Single(accountResult.MeterReadings);
+        Assert.Equal(01002, accountResult.CurrentReading.Value);
+        Assert.Equal(new DateTime(2019, 04, 22, 9, 25, 00), accountResult.CurrentReading.DateTime);
     }
 }

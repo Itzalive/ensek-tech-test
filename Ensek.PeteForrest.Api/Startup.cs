@@ -12,13 +12,17 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     public IWebHostEnvironment Environment { get; } = environment;
     
     public void ConfigureServices(IServiceCollection services) {
+        services.AddHttpContextAccessor();
         services.AddDbContext<MeterContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
         services.AddScoped<IMeterReadingService, MeterReadingService>();
 
-        services.AddControllers(options => { options.InputFormatters.Insert(0, new CsvFormatter()); });
+        services.AddControllers(options => {
+            options.InputFormatters.Insert(0, new CsvFormatter());
+            options.Filters.Add<UnitOfWorkFilter>();
+        });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
     }
