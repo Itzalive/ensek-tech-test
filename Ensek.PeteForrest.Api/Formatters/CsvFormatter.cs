@@ -38,7 +38,8 @@ namespace Ensek.PeteForrest.Api.Formatters {
                 PrepareHeaderForMatch = args => args.Header.ToLower()
             };
             using var csv = new CsvReader(reader, config);
-            return csv.GetRecords<T>().ToArray();
+            foreach(var record in csv.GetRecords<T>())
+                yield return record;
         }
     }
 }

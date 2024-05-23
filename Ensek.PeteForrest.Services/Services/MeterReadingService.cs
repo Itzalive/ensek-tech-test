@@ -37,48 +37,59 @@ namespace Ensek.PeteForrest.Services.Services
         }
 
         
-        public async Task<(int successes, int failures)> TryAddReadingsAsync(IEnumerable<MeterReadingLine> readings)
-        {
-            var requestedAccountIds = readings.Select(r => r.AccountId).Distinct().ToArray();
-
-            // NOTE: There is a SQL parameter limit on number of account ids that can be passed in at once of 2100.
-            var requestedAccounts = new List<Account>(requestedAccountIds.Length);
-            foreach (var requestedAccountIdChunk in requestedAccountIds.Chunk(2000)) {
-                requestedAccounts.AddRange(await accountRepository.GetAsync(requestedAccountIdChunk));
-            }
-
-            var validAccounts = requestedAccounts.ToDictionary(a => a.AccountId);
-
+        public async Task<(int successes, int failures)> TryAddReadingsAsync(IEnumerable<MeterReadingLine> readings) {
             var successes = 0;
-            foreach (var reading in readings)
-            {
-                if (!validAccounts.ContainsKey(reading.AccountId)) continue;
+            var failures = 0;
+            var seenAccounts = new Dictionary<int, Account>();
+            foreach (var readingChunk in readings.Chunk(2000)) {
+                var newlyRequestedAccountIds = readingChunk.Select(r => r.AccountId).Distinct().Where(id => !seenAccounts.ContainsKey(id)).ToList();
 
-                // Parse DateTime
-                if (!DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"),
-                        out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime,
-                        CultureInfo.InvariantCulture, out dateTime))
-                    continue;
+                // NOTE: There is a SQL parameter limit on number of account ids that can be passed in at once of 2100,
+                // but we've chunked the readings so will not surpass that.
+                var newAccounts = await accountRepository.GetAsync(newlyRequestedAccountIds);
+                foreach(var account in newAccounts) {
+                    seenAccounts.Add(account.AccountId, account);
+                }
 
-                // Parse the reading value
-                if (!MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
-                    continue;
+                foreach (var reading in readings) {
+                    if (!seenAccounts.ContainsKey(reading.AccountId)) {
+                        failures++;
+                        continue;
+                    }
 
-                var account = validAccounts[reading.AccountId];
+                    // Parse DateTime
+                    if (!DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.CreateSpecificCulture("en-gb"),
+                            out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime,
+                            CultureInfo.InvariantCulture, out dateTime)) {
+                        failures++;
+                        continue;
+                    }
 
-                // Confirm the reading is the newest reading
-                if (account.CurrentReading != null && account.CurrentReading.DateTime >= dateTime)
-                    continue;
+                    // Parse the reading value
+                    if (!MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult)) {
+                        failures++;
+                        continue;
+                    }
 
-                var meterReading = new MeterReading {
-                    Account = account, Value = intValueResult, DateTime = dateTime
-                };
-                meterReadingRepository.Add(meterReading);
-                account.CurrentReading = meterReading;
-                successes++;
+                    var account = seenAccounts[reading.AccountId];
+
+                    // Confirm the reading is the newest reading
+                    if (account.CurrentReading != null && account.CurrentReading.DateTime >= dateTime) {
+                        failures++;
+                        continue;
+                    }
+
+                    var meterReading = new MeterReading {
+                        Account = account,
+                        Value = intValueResult,
+                        DateTime = dateTime
+                    };
+                    meterReadingRepository.Add(meterReading);
+                    account.CurrentReading = meterReading;
+                    successes++;
+                }
             }
-
-            return (successes, readings.Count() - successes);
+            return (successes, failures);
         }
     }
 }
