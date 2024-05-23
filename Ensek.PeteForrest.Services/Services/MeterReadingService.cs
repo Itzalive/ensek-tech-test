@@ -44,9 +44,7 @@ namespace Ensek.PeteForrest.Services.Services
             // NOTE: There is a SQL parameter limit on number of account ids that can be passed in at once of 2100.
             var requestedAccounts = new List<Account>(requestedAccountIds.Length);
             foreach (var requestedAccountIdChunk in requestedAccountIds.Chunk(2000)) {
-                requestedAccounts.AddRange(await accountRepository.Query.Include(a => a.CurrentReading)
-                    .Where(a => requestedAccountIdChunk.Contains(a.AccountId))
-                    .ToArrayAsync());
+                requestedAccounts.AddRange(await accountRepository.GetAsync(requestedAccountIdChunk));
             }
 
             var validAccounts = requestedAccounts.ToDictionary(a => a.AccountId);

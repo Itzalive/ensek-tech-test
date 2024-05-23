@@ -110,7 +110,6 @@ public class MeterReadingControllerIntegrationTests(ApiHostFixture apiHostFixtur
         Assert.Equal(1, result.NumberOfFailedReadings);
     }
 
-
     [Fact]
     public async Task ReadsAndStoresValidCsv() {
         var entity = new Account();

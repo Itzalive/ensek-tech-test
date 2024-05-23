@@ -115,8 +115,6 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.SetupGet(a => a.Query).Returns(new[]{new Account { AccountId = 1 }}.AsQueryable());
-            meterReadingRepositoryMock.SetupGet(a => a.Query).Returns(new EnumerableQuery<MeterReading>([]));
             
             var result =
                     await service.TryAddReadingAsync(new MeterReadingLine{AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = dateTime});
@@ -126,12 +124,12 @@ namespace Ensek.PeteForrest.Services.Tests.Services
         }
 
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_CanSuccessfullyAddMeterReading() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult<Account[]>([new Account { AccountId = 1 }]));
 
             var (successes, failures) = await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = DateTime.UtcNow.ToString("dd/MM/yyyy hh:mm") }]);
 
@@ -140,12 +138,12 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.Verify(m => m.Add(It.IsAny<MeterReading>()));
         }
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_FailsWithMissingAccount() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult((Account?)null));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(Array.Empty<Account>()));
 
             var (successes, failures) = await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = DateTime.UtcNow.ToString("dd/MM/yyyy hh:mm") }]);
 
@@ -154,7 +152,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.VerifyNoOtherCalls();
         }
 
-        [Theory(Skip = "Need to Mock IQueryable")]
+        [Theory]
         [InlineData("A")]
         [InlineData("ABCDE")]
         [InlineData("123")]
@@ -166,7 +164,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1 } }));
 
             var (successes, failures) = await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = value, MeterReadingDateTime = DateTime.UtcNow.ToString("dd/MM/yyyy hh:mm") }]);
 
@@ -175,13 +173,13 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.VerifyNoOtherCalls();
         }
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_FailsWhenAlreadyAdded() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             var existingReading = new MeterReading { DateTime = DateTime.UtcNow, Value = 41823 };
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1, CurrentReading = existingReading, MeterReadings = [existingReading] } }));
 
             var (successes, failures) =
                 await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.ToString("dd/MM/yyyy hh:mm") }]);
@@ -191,13 +189,13 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.VerifyNoOtherCalls();
         }
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_SucceedsWhenOnlyValueMatches() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             var existingReading = new MeterReading { DateTime = DateTime.UtcNow, Value = 41823 };
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1, CurrentReading = existingReading, MeterReadings = [existingReading] } }));
 
             var (successes, failures) =
                 await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.AddDays(1).ToString("dd/MM/yyyy hh:mm") }]);
@@ -207,13 +205,13 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.Verify(m => m.Add(It.IsAny<MeterReading>()));
         }
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_FailsIfBeforeLastReading() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
             var existingReading = new MeterReading { DateTime = DateTime.UtcNow, Value = 41823 };
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [existingReading] }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1, CurrentReading = existingReading, MeterReadings = [existingReading] } }));
 
             var (successes, failures) =
                 await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = existingReading.Value.ToString(), MeterReadingDateTime = existingReading.DateTime.AddDays(-1).ToString("dd/MM/yyyy hh:mm") }]);
@@ -223,14 +221,14 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.VerifyNoOtherCalls();
         }
 
-        [Theory(Skip = "Need to Mock IQueryable")]
+        [Theory]
         [InlineData("NOT A DATE")]
         [InlineData("22/04/2019 09:25:25:25")]
         public async Task TryAddReadingsAsync_InvalidDatetime_ReturnsFailure(string dateTime) {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1 }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1 } }));
 
             var (successes, failures) =
                     await service.TryAddReadingsAsync([new MeterReadingLine { AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = dateTime }]);
@@ -240,12 +238,12 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             meterReadingRepositoryMock.VerifyNoOtherCalls();
         }
 
-        [Fact(Skip = "Need to Mock IQueryable")]
+        [Fact]
         public async Task TryAddReadingsAsync_SameReadingTwice_AcceptsOnlyOne() {
             var accountRepositoryMock = new Mock<IAccountRepository>();
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object);
-            accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult(new Account { AccountId = 1, MeterReadings = [] }));
+            accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.FromResult(new[] { new Account { AccountId = 1, MeterReadings = [] } }));
 
             var meterReadingLine = new MeterReadingLine { AccountId = 1, MeterReadValue = "12345", MeterReadingDateTime = DateTime.UtcNow.ToString("dd/MM/yyyy hh:mm") };
             var (successes, failures) =
