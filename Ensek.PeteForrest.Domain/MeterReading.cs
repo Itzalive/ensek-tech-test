@@ -1,7 +1,10 @@
-﻿namespace Ensek.PeteForrest.Domain {
+﻿using System.Text.Json.Serialization;
+
+namespace Ensek.PeteForrest.Domain {
     public class MeterReading {
         public int MeterReadingId { get; set; }
 
+        [JsonIgnore]
         public Account Account { get; set; }
 
         public DateTime DateTime { get; set; }
