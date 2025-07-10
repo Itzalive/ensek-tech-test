@@ -1,9 +1,8 @@
 using System.Globalization;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Ensek.PeteForrest.Domain;
-using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using nietras.SeparatedValues;
 
 namespace Ensek.PeteForrest.Api;
 
@@ -40,28 +39,18 @@ public static class DbInitializer
 
     public static void InsertAccountsFromCsv(MeterContext context, string path)
     {
-        using (var reader = new StreamReader(path))
-        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        using (var csv = new Sep(',').Reader().FromFile(path))
         {
-            csv.Context.RegisterClassMap<AccountMap>();
-            var records = csv.GetRecords<Account>();
-            foreach (var record in records)
+            foreach (var record in csv)
             {
+                var accountId = record["AccountId"].Parse<int>();
+                var firstName = record["FirstName"].ToString();
+                var lastName = record["LastName"].ToString();
                 context.Database.ExecuteSql(
-                    $"INSERT INTO Accounts (AccountId, FirstName, LastName) values ({record.AccountId}, {record.FirstName}, {record.LastName});");
+                    $"INSERT INTO Accounts (AccountId, FirstName, LastName) values ({accountId}, '{firstName}', '{lastName}');");
             }
         }
 
         context.SaveChanges();
-    }
-
-    public sealed class AccountMap : ClassMap<Account>
-    {
-        public AccountMap()
-        {
-            Map(m => m.AccountId);
-            Map(m => m.FirstName);
-            Map(m => m.LastName);
-        }
     }
 }

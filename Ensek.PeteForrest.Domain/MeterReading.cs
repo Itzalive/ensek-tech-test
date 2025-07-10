@@ -1,15 +1,12 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Ensek.PeteForrest.Domain {
+﻿namespace Ensek.PeteForrest.Domain {
     public class MeterReading {
         public int MeterReadingId { get; set; }
 
-        [JsonIgnore]
-        public Account Account { get; set; }
+        public required int AccountId { get; set; }
 
-        public DateTime DateTime { get; set; }
+        public required DateTime DateTime { get; set; }
 
-        public int Value { get; set; }
+        public required int Value { get; set; }
 
         public static bool TryParseValue(string value, out int result)
         {

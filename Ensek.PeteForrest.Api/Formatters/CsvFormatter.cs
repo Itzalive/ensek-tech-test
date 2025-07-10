@@ -2,44 +2,47 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
+using nietras.SeparatedValues;
 
-namespace Ensek.PeteForrest.Api.Formatters {
-    public class CsvFormatter : TextInputFormatter{
-        public CsvFormatter()
+namespace Ensek.PeteForrest.Api.Formatters
+{
+    public class CsvFormatter<T> : TextInputFormatter
+    {
+        private readonly ICsvRowConverter<T> _csvRowConverter;
+
+        public CsvFormatter(ICsvRowConverter<T> csvRowConverter)
         {
+            _csvRowConverter = csvRowConverter;
             this.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/csv"));
-            
+
             this.SupportedEncodings.Add(Encoding.UTF8);
             this.SupportedEncodings.Add(Encoding.Unicode);
         }
 
-        protected override bool CanReadType(Type type) => type.IsAssignableTo(typeof(IEnumerable)) && type.GetGenericArguments().Length == 1;
+        protected override bool CanReadType(Type type) =>
+            type.IsAssignableTo(typeof(IAsyncEnumerable<T>));
 
-        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context,
+            Encoding encoding)
         {
             var httpContext = context.HttpContext;
-            var enumeratedType = context.ModelType.GetGenericArguments()[0];
-            using var streamReader = new StreamReader(httpContext.Request.Body, encoding);
-            var body = await streamReader.ReadToEndAsync();
-            var result = typeof(CsvFormatter).GetMethod(nameof(this.ReadRecords), BindingFlags.NonPublic | BindingFlags.Instance).MakeGenericMethod(enumeratedType)
-                .Invoke(this, [body]);
+            var result = ReadRecordsAsync(httpContext.Request.Body, encoding);
             return await InputFormatterResult.SuccessAsync(result);
         }
 
-        private IEnumerable<T> ReadRecords<T>(string body)
+        private async IAsyncEnumerable<T> ReadRecordsAsync(Stream stream, Encoding encoding)
         {
-            using var reader = new StringReader(body);
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            using var reader = await new Sep(',').Reader(o => o with
             {
-                PrepareHeaderForMatch = args => args.Header.ToLower()
-            };
-            using var csv = new CsvReader(reader, config);
-            foreach(var record in csv.GetRecords<T>())
-                yield return record;
+                CultureInfo = CultureInfo.InvariantCulture,
+                DisableColCountCheck = true
+            }).FromAsync(stream);
+            await foreach (var readRow in reader)
+            {
+                yield return _csvRowConverter.Convert(readRow);
+            }
         }
     }
 }

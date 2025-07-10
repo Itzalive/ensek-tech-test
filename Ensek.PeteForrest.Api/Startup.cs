@@ -22,8 +22,9 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
         services.AddScoped<IMeterReadingService, MeterReadingService>();
 
-        services.AddControllers(options => {
-            options.InputFormatters.Insert(0, new CsvFormatter());
+        services.AddControllers(options =>
+        {
+            options.InputFormatters.Insert(0, new CsvFormatter<MeterReadingLine>(new MeterReadingLineConverter()));
             options.Filters.Add<UnitOfWorkFilter>();
         });
         services.AddEndpointsApiExplorer();

@@ -12,13 +12,13 @@ public class MeterReadingControllerTests
     {
         var meterReadingService = new Mock<IMeterReadingService>();
         var controller = new MeterReadingController(meterReadingService.Object);
-        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IEnumerable<MeterReadingLine>>()))
+        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IAsyncEnumerable<MeterReadingLine>>()))
             .Returns(Task.FromResult((1, 0)));
 
-        var result = await controller.UploadMeterReadingsAsync([
+        var result = await controller.UploadMeterReadingsAsync(new[]{
             new MeterReadingLine
                 { AccountId = 1, MeterReadValue = "01002", MeterReadingDateTime = "22/04/2019 09:25" }
-        ]);
+        }.ToAsyncEnumerable());
 
         Assert.NotNull(result);
         Assert.Equal(1, result.NumberOfSuccessfulReadings);
@@ -30,13 +30,13 @@ public class MeterReadingControllerTests
     {
         var meterReadingService = new Mock<IMeterReadingService>();
         var controller = new MeterReadingController(meterReadingService.Object);
-        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IEnumerable<MeterReadingLine>>()))
+        meterReadingService.Setup(m => m.TryAddReadingsAsync(It.IsAny<IAsyncEnumerable<MeterReadingLine>>()))
             .Returns(Task.FromResult((0, 1)));
 
-        var result = await controller.UploadMeterReadingsAsync([
+        var result = await controller.UploadMeterReadingsAsync(new[]{
             new MeterReadingLine
                 { AccountId = 1, MeterReadValue = "01002", MeterReadingDateTime = "22/04/2019 09:25" }
-        ]);
+        }.ToAsyncEnumerable());
 
         Assert.NotNull(result);
         Assert.Equal(0, result.NumberOfSuccessfulReadings);

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Ensek.PeteForrest.Domain {
     public class Account {
         public int AccountId { get; set; }
@@ -8,9 +6,10 @@ namespace Ensek.PeteForrest.Domain {
 
         public string? LastName { get; set; }
 
-        public MeterReading? CurrentReading { get; set; }
+        public int? CurrentMeterReadingId { get; set; }
 
-        [InverseProperty(nameof(MeterReading.Account))]
+        public MeterReading? CurrentMeterReading { get; set; }
+
         public ICollection<MeterReading> MeterReadings { get; set; } = default!;
     }
 }

@@ -9,7 +9,7 @@ namespace Ensek.PeteForrest.Api.Controllers;
 public class MeterReadingController(IMeterReadingService meterReadingService) : ControllerBase
 {
     [HttpPost("meter-reading-uploads")]
-    public async Task<MeterReadingUploadResult> UploadMeterReadingsAsync([FromBody] IEnumerable<MeterReadingLine> meterReadingLines)
+    public async Task<MeterReadingUploadResult> UploadMeterReadingsAsync([FromBody] IAsyncEnumerable<MeterReadingLine> meterReadingLines)
     {
         var (successes, failures) = await meterReadingService.TryAddReadingsAsync(meterReadingLines);
         return new MeterReadingUploadResult(successes, failures);

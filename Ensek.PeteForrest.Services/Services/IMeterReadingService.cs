@@ -6,5 +6,5 @@ public interface IMeterReadingService
 {
     public Task<bool> TryAddReadingAsync(MeterReadingLine reading);
 
-    public Task<(int successes, int failures)> TryAddReadingsAsync(IEnumerable<MeterReadingLine> readings);
+    public Task<(int Successes, int Failures)> TryAddReadingsAsync(IAsyncEnumerable<MeterReadingLine> readings);
 }

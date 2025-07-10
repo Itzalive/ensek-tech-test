@@ -125,13 +125,13 @@ public class MeterReadingControllerIntegrationTests(ApiHostFixture apiHostFixtur
         Assert.Equal(1, result.NumberOfSuccessfulReadings);
         Assert.Equal(0, result.NumberOfFailedReadings);
 
-        var accountResult = apiHostFixture.Context.Accounts.Include(a => a.CurrentReading)
+        var accountResult = apiHostFixture.Context.Accounts.Include(a => a.CurrentMeterReading)
                                                            .Include(a => a.MeterReadings)
                                                            .SingleOrDefault(a => a.AccountId == entity.AccountId);
         Assert.NotNull(accountResult);
-        Assert.NotNull(accountResult.CurrentReading);
+        Assert.NotNull(accountResult.CurrentMeterReading);
         Assert.Single(accountResult.MeterReadings);
-        Assert.Equal(01002, accountResult.CurrentReading.Value);
-        Assert.Equal(new DateTime(2019, 04, 22, 9, 25, 00), accountResult.CurrentReading.DateTime);
+        Assert.Equal(01002, accountResult.CurrentMeterReading.Value);
+        Assert.Equal(new DateTime(2019, 04, 22, 9, 25, 00), accountResult.CurrentMeterReading.DateTime);
     }
 }
