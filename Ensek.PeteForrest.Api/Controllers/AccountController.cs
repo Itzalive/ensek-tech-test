@@ -1,5 +1,5 @@
 ﻿using Ensek.PeteForrest.Domain;
-using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ensek.PeteForrest.Api.Controllers {

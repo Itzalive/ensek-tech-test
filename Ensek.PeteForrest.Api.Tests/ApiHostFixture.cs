@@ -1,5 +1,5 @@
 ﻿using System.Data.Common;
-using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Infrastructure.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;

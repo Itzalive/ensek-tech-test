@@ -1,8 +1,9 @@
 ﻿using Ensek.PeteForrest.Domain;
+using Ensek.PeteForrest.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace Ensek.PeteForrest.Services.Data;
+namespace Ensek.PeteForrest.Infrastructure.Data;
 
 public class AccountRepository(MeterContext context) : IAccountRepository
 {

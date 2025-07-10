@@ -1,5 +1,8 @@
 using Ensek.PeteForrest.Api.Formatters;
-using Ensek.PeteForrest.Services.Data;
+using Ensek.PeteForrest.Domain.Repositories;
+using Ensek.PeteForrest.Infrastructure.Behaviours;
+using Ensek.PeteForrest.Infrastructure.Data;
+using Ensek.PeteForrest.Services.Model;
 using Ensek.PeteForrest.Services.Services;
 using Microsoft.EntityFrameworkCore;
 

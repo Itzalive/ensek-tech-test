@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensek.PeteForrest.Domain.Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{CBA04A7D-DC98-40C9-8A82-0F3737019D73}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ensek.PeteForrest.Infrastructure", "Ensek.PeteForrest.Infrastructure\Ensek.PeteForrest.Infrastructure.csproj", "{B0644F0F-FDB0-4B74-BC4E-9A2E3472DFA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{5CAB864E-9CFC-4821-A6C8-03F94D3AB9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CAB864E-9CFC-4821-A6C8-03F94D3AB9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CAB864E-9CFC-4821-A6C8-03F94D3AB9C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0644F0F-FDB0-4B74-BC4E-9A2E3472DFA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0644F0F-FDB0-4B74-BC4E-9A2E3472DFA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0644F0F-FDB0-4B74-BC4E-9A2E3472DFA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0644F0F-FDB0-4B74-BC4E-9A2E3472DFA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

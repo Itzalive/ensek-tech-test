@@ -1,7 +1,7 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace Ensek.PeteForrest.Services.Data
+namespace Ensek.PeteForrest.Infrastructure.Data
 {
     public class MeterContext : DbContext
     {

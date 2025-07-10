@@ -1,7 +1,10 @@
-﻿using Ensek.PeteForrest.Services.Data;
+﻿using Ensek.PeteForrest.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Ensek.PeteForrest.Api {
+namespace Ensek.PeteForrest.Infrastructure.Behaviours
+{
     public class UnitOfWorkFilter(IHttpContextAccessor httpContextAccessor) : IAsyncActionFilter {
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next) {
             var actionExecutedContext = await next();

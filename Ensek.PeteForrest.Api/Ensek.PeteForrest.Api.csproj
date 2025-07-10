@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ensek.PeteForrest.Domain\Ensek.PeteForrest.Domain.csproj" />
+    <ProjectReference Include="..\Ensek.PeteForrest.Infrastructure\Ensek.PeteForrest.Infrastructure.csproj" />
     <ProjectReference Include="..\Ensek.PeteForrest.Services\Ensek.PeteForrest.Services.csproj" />
   </ItemGroup>
 

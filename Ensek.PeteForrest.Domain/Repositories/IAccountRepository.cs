@@ -1,6 +1,6 @@
 ﻿using Ensek.PeteForrest.Domain;
 
-namespace Ensek.PeteForrest.Services.Data
+namespace Ensek.PeteForrest.Domain.Repositories
 {
     public interface IAccountRepository
     {

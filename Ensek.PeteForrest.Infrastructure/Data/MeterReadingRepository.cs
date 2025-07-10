@@ -1,7 +1,8 @@
 ﻿using Ensek.PeteForrest.Domain;
+using Ensek.PeteForrest.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Ensek.PeteForrest.Services.Data;
+namespace Ensek.PeteForrest.Infrastructure.Data;
 
 public class MeterReadingRepository(MeterContext context) : IMeterReadingRepository
 {
