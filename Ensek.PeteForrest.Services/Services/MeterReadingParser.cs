@@ -1,0 +1,48 @@
+﻿using System.Globalization;
+using Ensek.PeteForrest.Domain;
+using Ensek.PeteForrest.Services.Model;
+
+namespace Ensek.PeteForrest.Services.Services;
+
+public class MeterReadingParser : IMeterReadingParser
+{
+    private readonly CultureInfo _gbCulture = CultureInfo.CreateSpecificCulture("en-gb");
+    public bool TryParse(MeterReadingLine reading, out ParsedMeterReading parsedMeterReading)
+    {
+        if (!reading.AccountId.HasValue)
+        {
+            parsedMeterReading = null!;
+            return false;
+        }
+
+        // Parse DateTime
+        if (string.IsNullOrEmpty(reading.MeterReadingDateTime) ||
+            (!DateTime.TryParse(reading.MeterReadingDateTime, _gbCulture,
+                out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.InvariantCulture,
+                out dateTime)))
+        {
+            parsedMeterReading = null!;
+            return false;
+        }
+
+        // Parse the reading value
+        if (string.IsNullOrEmpty(reading.MeterReadValue) ||
+            !MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
+        {
+            parsedMeterReading = null!;
+            return false;
+        }
+
+        parsedMeterReading = new ParsedMeterReading
+        {
+            RowId = reading.RowId,
+            MeterReading = new MeterReading
+            {
+                AccountId = reading.AccountId.Value,
+                DateTime = dateTime,
+                Value = intValueResult
+            }
+        };
+        return true;
+    }
+}

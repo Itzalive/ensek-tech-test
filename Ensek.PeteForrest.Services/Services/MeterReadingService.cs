@@ -1,27 +1,45 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Domain.Repositories;
 using Ensek.PeteForrest.Services.Model;
-using System.Globalization;
 using System.Threading.Channels;
 
 namespace Ensek.PeteForrest.Services.Services
 {
     public class MeterReadingService(
         IAccountRepository accountRepository,
-        IMeterReadingRepository meterReadingRepository)
+        IMeterReadingRepository meterReadingRepository,
+        IMeterReadingParser meterReadingParser,
+        IEnumerable<IMeterReadingValidator> meterReadingValidators)
         : IMeterReadingService
     {
-        private static readonly CultureInfo GbCulture = CultureInfo.CreateSpecificCulture("en-gb");
-
         public async Task<bool> TryAddReadingAsync(MeterReadingLine reading)
         {
-            if (!TryParseMeterReadingAsync(reading, out var parsedMeterReading)) return false;
+            if (!meterReadingParser.TryParse(reading, out var parsedMeterReading)) return false;
 
             var account = await accountRepository.GetAsync(parsedMeterReading.MeterReading.AccountId);
             if (account == null) return false;
 
-            // Confirm the reading is the newest reading (also confirms it's not a duplicate)
-            if (account.MeterReadings?.Any(r => r.DateTime >= parsedMeterReading.MeterReading.DateTime) ?? false)
+            var validationFailed = false;
+            using var cancellationTokenSource = new CancellationTokenSource();
+            try
+            {
+                await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
+                    async (meterReadingValidator, ct) =>
+                    {
+                        var validationResult =
+                            await meterReadingValidator.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
+                        if (validationResult.IsValid) return;
+                        await cancellationTokenSource.CancelAsync();
+                        validationFailed = true;
+                    });
+            }
+            catch (OperationCanceledException)
+            {
+                // If the task was cancelled, we assume validation failed
+                return false;
+            }
+
+            if (validationFailed)
                 return false;
 
             meterReadingRepository.Add(parsedMeterReading.MeterReading);
@@ -30,21 +48,31 @@ namespace Ensek.PeteForrest.Services.Services
         }
 
         public async Task<(int Successes, int Failures)> TryAddReadingsAsync(
-            IAsyncEnumerable<MeterReadingLine> readings)
+            IAsyncEnumerable<MeterReadingLine> readings, CancellationToken cancellationToken = default)
         {
             const int chunkSize = 500;
-            var toBeParsedChannel = Channel.CreateUnbounded<MeterReadingLine>();
-            var toBeValidatedChannel = Channel.CreateUnbounded<List<ParsedMeterReading>>();
+            var channelOptions = new BoundedChannelOptions(chunkSize)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true
+            };
+
+            // Create two channels: one for parsing and one for validation,
+            // this allows decoupling the parsing and validation steps
+            // and to begin parsing as soon as we have streamed the first readings
+            var toBeParsedChannel = Channel.CreateBounded<MeterReadingLine>(channelOptions);
+            var toBeValidatedChannel = Channel.CreateBounded<List<ParsedMeterReading>>(channelOptions);
 
             var parsingTask = Task.Run(async () =>
             {
                 var parsingFailures = 0;
                 var parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
-                while (await toBeParsedChannel.Reader.WaitToReadAsync())
+                while (await toBeParsedChannel.Reader.WaitToReadAsync(cancellationToken))
                 {
                     while (toBeParsedChannel.Reader.TryRead(out var item))
                     {
-                        if (TryParseMeterReadingAsync(item, out var parsedMeterReading))
+                        if (meterReadingParser.TryParse(item, out var parsedMeterReading))
                         {
                             parsedMeterReadings.Add(parsedMeterReading);
                         }
@@ -54,25 +82,25 @@ namespace Ensek.PeteForrest.Services.Services
                         }
 
                         if (parsedMeterReadings.Count != chunkSize) continue;
-                        await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings);
+                        await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
                         parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
                     }
                 }
 
                 if (parsedMeterReadings.Count > 0)
                 {
-                    await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings);
+                    await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
                 }
 
                 return parsingFailures;
-            });
+            }, cancellationToken);
 
             var validationTask = Task.Run(async () =>
             {
                 var failures = 0;
                 var successes = 0;
                 var accountCache = new Dictionary<int, Account>();
-                while (await toBeValidatedChannel.Reader.WaitToReadAsync())
+                while (await toBeValidatedChannel.Reader.WaitToReadAsync(cancellationToken))
                 {
                     while (toBeValidatedChannel.Reader.TryRead(out var parsedMeterReadings))
                     {
@@ -82,17 +110,17 @@ namespace Ensek.PeteForrest.Services.Services
                 }
 
                 return (successes, validationFailures: failures);
-            });
+            }, cancellationToken);
 
-            await foreach (var line in readings)
+            await foreach (var line in readings.WithCancellation(cancellationToken))
             {
-                toBeParsedChannel.Writer.TryWrite(line);
+                await toBeParsedChannel.Writer.WriteAsync(line, cancellationToken);
             }
 
             toBeParsedChannel.Writer.Complete();
-            var parsingFailures = await parsingTask;
+            var parsingFailures = await parsingTask.WaitAsync(cancellationToken);
             toBeValidatedChannel.Writer.Complete();
-            var (validationSuccesses, validationFailures) = await validationTask;
+            var (validationSuccesses, validationFailures) = await validationTask.WaitAsync(cancellationToken);
 
             return (validationSuccesses, parsingFailures + validationFailures);
         }
@@ -121,9 +149,28 @@ namespace Ensek.PeteForrest.Services.Services
                     continue;
                 }
 
-                // Confirm the reading is the newest reading
-                if (account.CurrentMeterReading != null &&
-                    account.CurrentMeterReading.DateTime >= reading.MeterReading.DateTime)
+                var validationFailed = false;
+                using var cancellationTokenSource = new CancellationTokenSource();
+                try
+                {
+                    await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
+                        async (meterReadingValidator, ct) =>
+                        {
+                            var validationResult =
+                                await meterReadingValidator.ValidateAsync(reading.MeterReading, account, ct);
+                            if (validationResult.IsValid) return;
+                            await cancellationTokenSource.CancelAsync();
+                            validationFailed = true;
+                        });
+                }
+                catch (OperationCanceledException)
+                {
+                    // If the task was cancelled, we assume validation failed
+                    failures++;
+                    continue;
+                }
+
+                if (validationFailed)
                 {
                     failures++;
                     continue;
@@ -135,52 +182,6 @@ namespace Ensek.PeteForrest.Services.Services
             }
 
             return (failures, successes);
-        }
-
-        private static bool TryParseMeterReadingAsync(MeterReadingLine reading,
-            out ParsedMeterReading parsedMeterReading)
-        {
-            if (!reading.AccountId.HasValue)
-            {
-                parsedMeterReading = null!;
-                return false;
-            }
-
-            // Parse DateTime
-            if (string.IsNullOrEmpty(reading.MeterReadingDateTime) ||
-                (!DateTime.TryParse(reading.MeterReadingDateTime, GbCulture,
-                    out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.InvariantCulture,
-                    out dateTime)))
-            {
-                parsedMeterReading = null!;
-                return false;
-            }
-
-            // Parse the reading value
-            if (string.IsNullOrEmpty(reading.MeterReadValue) ||
-                !MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
-            {
-                parsedMeterReading = null!;
-                return false;
-            }
-
-            parsedMeterReading = new ParsedMeterReading
-            {
-                RowId = reading.RowId,
-                MeterReading = new MeterReading
-                {
-                    AccountId = reading.AccountId.Value,
-                    DateTime = dateTime,
-                    Value = intValueResult
-                }
-            };
-            return true;
-        }
-
-        internal record ParsedMeterReading
-        {
-            public required int RowId { get; init; }
-            public required MeterReading MeterReading { get; init; }
         }
     }
 }

@@ -20,6 +20,8 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+        services.AddScoped<IMeterReadingParser, MeterReadingParser>();
+        services.AddScoped<IMeterReadingValidator, MeterReadingMostRecentValidator>();
         services.AddScoped<IMeterReadingService, MeterReadingService>();
 
         services.AddControllers(options =>
