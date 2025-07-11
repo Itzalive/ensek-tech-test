@@ -183,29 +183,17 @@ namespace Ensek.PeteForrest.Services.Services
 
         private async Task<bool> ValidateReadingAsync(ParsedMeterReading parsedMeterReading, Account account)
         {
-            var validationFailed = false;
-            using var cancellationTokenSource = new CancellationTokenSource();
-            try
+            foreach (var validationRule in meterReadingValidators)
             {
-                await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
-                    async (meterReadingValidator, ct) =>
-                    {
-                        var validationResult =
-                            await meterReadingValidator.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
-                        if (validationResult.IsValid) return;
-                        logger.LogInformation("Validation failed for reading on row {RowId}: {ValidationError}",
-                            parsedMeterReading.RowId, validationResult.Error);
-                        await cancellationTokenSource.CancelAsync();
-                        validationFailed = true;
-                    });
-            }
-            catch (OperationCanceledException)
-            {
-                // If the task was cancelled, we assume validation failed
+                var validationResult =
+                    await validationRule.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
+                if (validationResult.IsValid) continue;
+                logger.LogInformation("Validation failed for reading on row {RowId}: {ValidationError}",
+                    parsedMeterReading.RowId, validationResult.Error);
                 return false;
             }
 
-            return !validationFailed;
+            return true;
         }
     }
 }
