@@ -7,6 +7,8 @@ namespace Ensek.PeteForrest.Services.Tests.Services
     {
         private readonly MeterReadingMostRecentValidator _validator = new();
 
+        // Tests written by Claude AI
+
         [Fact]
         public async Task ValidateAsync_NoCurrentReading_ReturnsValid()
         {
