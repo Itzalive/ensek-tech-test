@@ -26,12 +26,16 @@ Console.WriteLine("Ensuring DB schema is up to date...");
 
 await context.Database.EnsureCreatedAsync();
 
-Console.WriteLine("Seeding starting data...");
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+{
+    Console.WriteLine("Seeding starting data...");
 
-var seededAccounts = await AccountSeeder.SeedAccountsAsync(context, "Data/Test_Accounts 2.csv");
+    var seededAccounts = await AccountSeeder.SeedAccountsAsync(context, "Data/Test_Accounts 2.csv");
 
-if (seededAccounts) {
-    Console.WriteLine("Seeded Account data");
+    if (seededAccounts)
+    {
+        Console.WriteLine("Seeded Account data");
+    }
 }
 
 Console.WriteLine("done");
