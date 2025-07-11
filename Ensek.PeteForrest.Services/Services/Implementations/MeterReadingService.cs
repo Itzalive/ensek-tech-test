@@ -1,10 +1,11 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Domain.Repositories;
 using Ensek.PeteForrest.Services.Model;
+using Ensek.PeteForrest.Services.Models;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
-namespace Ensek.PeteForrest.Services.Services
+namespace Ensek.PeteForrest.Services.Services.Implementations
 {
     public class MeterReadingService(
         IAccountRepository accountRepository,

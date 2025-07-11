@@ -1,8 +1,9 @@
 ﻿using System.Globalization;
 using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Model;
+using Ensek.PeteForrest.Services.Models;
 
-namespace Ensek.PeteForrest.Services.Services;
+namespace Ensek.PeteForrest.Services.Services.Implementations;
 
 public class MeterReadingParser : IMeterReadingParser
 {
@@ -17,9 +18,9 @@ public class MeterReadingParser : IMeterReadingParser
 
         // Parse DateTime
         if (string.IsNullOrEmpty(reading.MeterReadingDateTime) ||
-            (!DateTime.TryParse(reading.MeterReadingDateTime, _gbCulture,
+            !DateTime.TryParse(reading.MeterReadingDateTime, _gbCulture,
                 out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.InvariantCulture,
-                out dateTime)))
+                out dateTime))
         {
             parsedMeterReading = null!;
             return false;

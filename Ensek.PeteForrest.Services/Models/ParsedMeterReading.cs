@@ -1,6 +1,6 @@
 ﻿using Ensek.PeteForrest.Domain;
 
-namespace Ensek.PeteForrest.Services.Services;
+namespace Ensek.PeteForrest.Services.Models;
 
 public record ParsedMeterReading
 {
