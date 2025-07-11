@@ -3,7 +3,7 @@ using Ensek.PeteForrest.Services.Models;
 
 namespace Ensek.PeteForrest.Services.Services.Implementations;
 
-public class MeterReadingMostRecentValidator : IMeterReadingValidator
+internal class MeterReadingMostRecentValidator : IMeterReadingValidator
 {
     public Task<ValidationResult> ValidateAsync(MeterReading reading, Account account, CancellationToken cancellationToken = default)
     {

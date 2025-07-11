@@ -19,7 +19,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).ReturnsAsync(new Account
             {
                 AccountId = 1

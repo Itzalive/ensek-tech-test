@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ensek.PeteForrest.Infrastructure.Data;
 
-public class MeterReadingRepository(MeterContext context) : IMeterReadingRepository
+internal class MeterReadingRepository(MeterContext context) : IMeterReadingRepository
 {
     private readonly MeterContext _context = context ?? throw new ArgumentNullException(nameof(context));
 

@@ -5,7 +5,7 @@ using Ensek.PeteForrest.Services.Models;
 
 namespace Ensek.PeteForrest.Services.Services.Implementations;
 
-public class MeterReadingParser : IMeterReadingParser
+internal class MeterReadingParser : IMeterReadingParser
 {
     private readonly CultureInfo _gbCulture = CultureInfo.CreateSpecificCulture("en-gb");
     public bool TryParse(MeterReadingLine reading, out ParsedMeterReading parsedMeterReading)

@@ -1,11 +1,10 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Ensek.PeteForrest.Infrastructure.Data;
 
-public class AccountRepository(MeterContext context) : IAccountRepository
+internal class AccountRepository(MeterContext context) : IAccountRepository
 {
     private readonly MeterContext _context = context ?? throw new ArgumentNullException(nameof(context));
 

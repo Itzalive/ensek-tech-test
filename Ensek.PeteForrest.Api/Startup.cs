@@ -1,10 +1,10 @@
 using Ensek.PeteForrest.Api.Formatters;
 using Ensek.PeteForrest.Domain.Repositories;
+using Ensek.PeteForrest.Infrastructure;
 using Ensek.PeteForrest.Infrastructure.Behaviours;
 using Ensek.PeteForrest.Infrastructure.Data;
+using Ensek.PeteForrest.Services;
 using Ensek.PeteForrest.Services.Model;
-using Ensek.PeteForrest.Services.Services;
-using Ensek.PeteForrest.Services.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ensek.PeteForrest.Api;
@@ -19,11 +19,9 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddHttpContextAccessor();
         services.AddDbContext<MeterContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-        services.AddScoped<IAccountRepository, AccountRepository>();
-        services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
-        services.AddScoped<IMeterReadingParser, MeterReadingParser>();
-        services.AddScoped<IMeterReadingValidator, MeterReadingMostRecentValidator>();
-        services.AddScoped<IMeterReadingService, MeterReadingService>();
+
+        services.AddInfrastructureServices();
+        services.AddServices();
 
         services.AddControllers(options =>
         {

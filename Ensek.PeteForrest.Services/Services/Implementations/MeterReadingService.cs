@@ -7,12 +7,12 @@ using System.Threading.Channels;
 
 namespace Ensek.PeteForrest.Services.Services.Implementations
 {
-    public class MeterReadingService(
+    internal class MeterReadingService(
         IAccountRepository accountRepository,
         IMeterReadingRepository meterReadingRepository,
         IMeterReadingParser meterReadingParser,
         IEnumerable<IMeterReadingValidator> meterReadingValidators,
-        ILogger<MeterReadingService> logger)
+        ILogger<IMeterReadingService> logger)
         : IMeterReadingService
     {
         public async Task<bool> TryAddReadingAsync(MeterReadingLine reading)
@@ -172,8 +172,7 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
                     continue;
                 }
 
-                meterReadingRepository.Add(reading.MeterReading);
-                account.CurrentMeterReading = reading.MeterReading;
+                account.AddReading(reading.MeterReading);
                 logger.LogDebug("Successfully added meter reading from row {RowId} for account {AccountId}",
                     reading.RowId, account.AccountId);
                 successes++;
