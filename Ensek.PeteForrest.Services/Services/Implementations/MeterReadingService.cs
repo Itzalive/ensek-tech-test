@@ -178,7 +178,8 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
                     continue;
                 }
 
-                account.AddReading(reading.MeterReading);
+                meterReadingRepository.Add(reading.MeterReading);
+                account.CurrentMeterReading = reading.MeterReading;
                 logger.LogDebug("Successfully added meter reading from row {RowId} for account {AccountId}",
                     reading.RowId, account.AccountId);
                 successes++;

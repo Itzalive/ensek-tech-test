@@ -55,7 +55,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).Returns(Task.FromResult((Account?)null));
 
             var result = await service.TryAddReadingAsync(new MeterReadingLine
@@ -76,7 +76,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             var existingReading = new MeterReading
             {
                 AccountId = 1,
@@ -109,7 +109,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).ReturnsAsync(new Account
             {
                 AccountId = 1
@@ -139,7 +139,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var meterReadingValidatorMock = new Mock<IMeterReadingValidator>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [meterReadingValidatorMock.Object], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [meterReadingValidatorMock.Object], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).ReturnsAsync(new Account
             {
                 AccountId = 1
@@ -178,7 +178,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>())).Returns(
                 Task.FromResult<Account[]>([
                     new Account
@@ -221,7 +221,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(It.IsAny<IEnumerable<int>>()))
                 .Returns(Task.FromResult(Array.Empty<Account>()));
 
@@ -247,7 +247,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             var existingReading = new MeterReading
             {
                 AccountId = 1,
@@ -287,7 +287,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingRepositoryMock = new Mock<IMeterReadingRepository>();
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).ReturnsAsync(new Account
             {
                 AccountId = 1
@@ -320,7 +320,7 @@ namespace Ensek.PeteForrest.Services.Tests.Services
             var meterReadingParserMock = new Mock<IMeterReadingParser>();
             var meterReadingValidatorMock = new Mock<IMeterReadingValidator>();
             var service = new MeterReadingService(accountRepositoryMock.Object, meterReadingRepositoryMock.Object,
-                meterReadingParserMock.Object, [meterReadingValidatorMock.Object], Mock.Of<ILogger<MeterReadingService>>());
+                meterReadingParserMock.Object, [meterReadingValidatorMock.Object], Mock.Of<ILogger<IMeterReadingService>>());
             accountRepositoryMock.Setup(a => a.GetAsync(1)).ReturnsAsync(new Account
             {
                 AccountId = 1
