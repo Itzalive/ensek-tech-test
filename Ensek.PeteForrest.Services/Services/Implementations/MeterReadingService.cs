@@ -50,7 +50,7 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
         public async Task<(int Successes, int Failures)> TryAddReadingsAsync(
             IAsyncEnumerable<MeterReadingLine> readings, CancellationToken cancellationToken = default)
         {
-            const int chunkSize = 500;
+            const int chunkSize = 2000;
             var channelOptions = new BoundedChannelOptions(chunkSize)
             {
                 FullMode = BoundedChannelFullMode.Wait,
@@ -64,57 +64,11 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
             var toBeParsedChannel = Channel.CreateBounded<MeterReadingLine>(channelOptions);
             var toBeValidatedChannel = Channel.CreateBounded<List<ParsedMeterReading>>(channelOptions);
 
-            var parsingTask = Task.Run(async () =>
-            {
-                var parsingFailures = 0;
-                var parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
-                while (await toBeParsedChannel.Reader.WaitToReadAsync(cancellationToken))
-                {
-                    while (toBeParsedChannel.Reader.TryRead(out var item))
-                    {
-                        if (meterReadingParser.TryParse(item, out var parsedMeterReading))
-                        {
-                            parsedMeterReadings.Add(parsedMeterReading);
-                        }
-                        else
-                        {
-                            logger.LogWarning("Failed to parse meter reading {@Reading}", item);
-                            parsingFailures++;
-                        }
+            // Task to process parsing channel
+            var parsingTask = ParseReadingsFromChannelAsync(chunkSize, toBeParsedChannel, toBeValidatedChannel, cancellationToken);
 
-                        if (parsedMeterReadings.Count != chunkSize) continue;
-                        logger.LogDebug("Sending chunk of {Count} readings for validation", parsedMeterReadings.Count);
-                        await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
-                        parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
-                    }
-                }
-
-                if (parsedMeterReadings.Count > 0)
-                {
-                    logger.LogDebug("Sending final chunk of {Count} readings for validation",
-                        parsedMeterReadings.Count);
-                    await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
-                }
-
-                return parsingFailures;
-            }, cancellationToken);
-
-            var validationTask = Task.Run(async () =>
-            {
-                var failures = 0;
-                var successes = 0;
-                var accountCache = new Dictionary<int, Account>();
-                while (await toBeValidatedChannel.Reader.WaitToReadAsync(cancellationToken))
-                {
-                    while (toBeValidatedChannel.Reader.TryRead(out var parsedMeterReadings))
-                    {
-                        (failures, successes) =
-                            await ValidateAndAddMeterReadings(parsedMeterReadings, accountCache, failures, successes);
-                    }
-                }
-
-                return (successes, validationFailures: failures);
-            }, cancellationToken);
+            // Task to process validation channel which then adds the meter readings to the db
+            var validationTask = ValidateReadingsFromChannelAsync(toBeValidatedChannel, cancellationToken);
 
             logger.LogDebug("Starting batch processing of meter readings with chunk size {ChunkSize}", chunkSize);
 
@@ -140,7 +94,59 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
             return (validationSuccesses, parsingFailures + validationFailures);
         }
 
-        private async Task<(int failures, int successes)> ValidateAndAddMeterReadings(
+        private async Task<int> ParseReadingsFromChannelAsync(int chunkSize, Channel<MeterReadingLine> inputChannel, Channel<List<ParsedMeterReading>> outputChannel, CancellationToken cancellationToken)
+        {
+            var parsingFailures = 0;
+            var parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
+            while (await inputChannel.Reader.WaitToReadAsync(cancellationToken))
+            {
+                while (inputChannel.Reader.TryRead(out var item))
+                {
+                    if (meterReadingParser.TryParse(item, out var parsedMeterReading))
+                    {
+                        parsedMeterReadings.Add(parsedMeterReading);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Failed to parse meter reading {@Reading}", item);
+                        parsingFailures++;
+                    }
+
+                    if (parsedMeterReadings.Count != chunkSize) continue;
+                    logger.LogDebug("Sending chunk of {Count} readings for validation", parsedMeterReadings.Count);
+                    await outputChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
+                    parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
+                }
+            }
+
+            if (parsedMeterReadings.Count > 0)
+            {
+                logger.LogDebug("Sending final chunk of {Count} readings for validation",
+                    parsedMeterReadings.Count);
+                await outputChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
+            }
+
+            return parsingFailures;
+        }
+
+        private async Task<(int Successes, int Failures)> ValidateReadingsFromChannelAsync(Channel<List<ParsedMeterReading>> inputChannel, CancellationToken cancellationToken)
+        {
+            var failures = 0;
+            var successes = 0;
+            var accountCache = new Dictionary<int, Account>();
+            while (await inputChannel.Reader.WaitToReadAsync(cancellationToken))
+            {
+                while (inputChannel.Reader.TryRead(out var parsedMeterReadings))
+                {
+                    (failures, successes) =
+                        await ValidateAndAddMeterReadings(parsedMeterReadings, accountCache, failures, successes);
+                }
+            }
+
+            return (successes, failures);
+        }
+
+        private async Task<(int Failures, int Successes)> ValidateAndAddMeterReadings(
             List<ParsedMeterReading> parsedMeterReadings, Dictionary<int, Account> accountCache, int failures,
             int successes)
         {
