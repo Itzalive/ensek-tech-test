@@ -20,19 +20,19 @@ namespace Ensek.PeteForrest.Services.Services
 
             if (reading.ParseErrors != ParseErrors.None)
             {
-                logger.LogInformation("Failed to parse meter reading on row {RowId}", reading.RowId);
+                logger.LogWarning("Failed to parse meter reading on row {RowId}", reading.RowId);
             }
 
             if (!meterReadingParser.TryParse(reading, out var parsedMeterReading))
             {
-                logger.LogInformation("Failed to parse meter reading {@Reading}", reading);
+                logger.LogWarning("Failed to parse meter reading {@Reading}", reading);
                 return false;
             }
 
             var account = await accountRepository.GetAsync(parsedMeterReading.MeterReading.AccountId);
             if (account == null)
             {
-                logger.LogInformation("Account {AccountId} not found for reading on row {RowId}",
+                logger.LogWarning("Account {AccountId} not found for reading on row {RowId}",
                     parsedMeterReading.MeterReading.AccountId, parsedMeterReading.RowId);
                 return false;
             }
@@ -77,7 +77,7 @@ namespace Ensek.PeteForrest.Services.Services
                         }
                         else
                         {
-                            logger.LogInformation("Failed to parse meter reading {@Reading}", item);
+                            logger.LogWarning("Failed to parse meter reading {@Reading}", item);
                             parsingFailures++;
                         }
 
@@ -121,7 +121,7 @@ namespace Ensek.PeteForrest.Services.Services
             {
                 if (line.ParseErrors != ParseErrors.None)
                 {
-                    logger.LogInformation("Failed to parse meter reading on row {RowId}", line.RowId);
+                    logger.LogWarning("Failed to parse meter reading on row {RowId}", line.RowId);
                     continue;
                 }
 
@@ -159,7 +159,7 @@ namespace Ensek.PeteForrest.Services.Services
             {
                 if (!accountCache.TryGetValue(reading.MeterReading.AccountId, out var account))
                 {
-                    logger.LogInformation("Account {AccountId} not found for reading on row {RowId}",
+                    logger.LogWarning("Account {AccountId} not found for reading on row {RowId}",
                         reading.MeterReading.AccountId, reading.RowId);
                     failures++;
                     continue;
@@ -188,7 +188,7 @@ namespace Ensek.PeteForrest.Services.Services
                 var validationResult =
                     await validationRule.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
                 if (validationResult.IsValid) continue;
-                logger.LogInformation("Validation failed for reading on row {RowId}: {ValidationError}",
+                logger.LogWarning("Validation failed for reading on row {RowId}: {ValidationError}",
                     parsedMeterReading.RowId, validationResult.Error);
                 return false;
             }
