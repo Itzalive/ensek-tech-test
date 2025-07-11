@@ -1,6 +1,7 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Domain.Repositories;
 using Ensek.PeteForrest.Services.Model;
+using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
 
 namespace Ensek.PeteForrest.Services.Services
@@ -9,41 +10,39 @@ namespace Ensek.PeteForrest.Services.Services
         IAccountRepository accountRepository,
         IMeterReadingRepository meterReadingRepository,
         IMeterReadingParser meterReadingParser,
-        IEnumerable<IMeterReadingValidator> meterReadingValidators)
+        IEnumerable<IMeterReadingValidator> meterReadingValidators,
+        ILogger<MeterReadingService> logger)
         : IMeterReadingService
     {
         public async Task<bool> TryAddReadingAsync(MeterReadingLine reading)
         {
-            if (!meterReadingParser.TryParse(reading, out var parsedMeterReading)) return false;
+            logger.LogDebug("Processing meter reading for account {AccountId}", reading.AccountId);
+
+            if (reading.ParseErrors != ParseErrors.None)
+            {
+                logger.LogInformation("Failed to parse meter reading on row {RowId}", reading.RowId);
+            }
+
+            if (!meterReadingParser.TryParse(reading, out var parsedMeterReading))
+            {
+                logger.LogInformation("Failed to parse meter reading {@Reading}", reading);
+                return false;
+            }
 
             var account = await accountRepository.GetAsync(parsedMeterReading.MeterReading.AccountId);
-            if (account == null) return false;
-
-            var validationFailed = false;
-            using var cancellationTokenSource = new CancellationTokenSource();
-            try
+            if (account == null)
             {
-                await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
-                    async (meterReadingValidator, ct) =>
-                    {
-                        var validationResult =
-                            await meterReadingValidator.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
-                        if (validationResult.IsValid) return;
-                        await cancellationTokenSource.CancelAsync();
-                        validationFailed = true;
-                    });
-            }
-            catch (OperationCanceledException)
-            {
-                // If the task was cancelled, we assume validation failed
+                logger.LogInformation("Account {AccountId} not found for reading on row {RowId}",
+                    parsedMeterReading.MeterReading.AccountId, parsedMeterReading.RowId);
                 return false;
             }
 
-            if (validationFailed)
-                return false;
+            if (!await ValidateReadingAsync(parsedMeterReading, account)) return false;
 
             meterReadingRepository.Add(parsedMeterReading.MeterReading);
             account.CurrentMeterReading = parsedMeterReading.MeterReading;
+            logger.LogDebug("Successfully added meter reading from row {RowId} for account {AccountId}",
+                reading.RowId, account.AccountId);
             return true;
         }
 
@@ -78,10 +77,12 @@ namespace Ensek.PeteForrest.Services.Services
                         }
                         else
                         {
+                            logger.LogInformation("Failed to parse meter reading {@Reading}", item);
                             parsingFailures++;
                         }
 
                         if (parsedMeterReadings.Count != chunkSize) continue;
+                        logger.LogDebug("Sending chunk of {Count} readings for validation", parsedMeterReadings.Count);
                         await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
                         parsedMeterReadings = new List<ParsedMeterReading>(chunkSize);
                     }
@@ -89,6 +90,8 @@ namespace Ensek.PeteForrest.Services.Services
 
                 if (parsedMeterReadings.Count > 0)
                 {
+                    logger.LogDebug("Sending final chunk of {Count} readings for validation",
+                        parsedMeterReadings.Count);
                     await toBeValidatedChannel.Writer.WriteAsync(parsedMeterReadings, cancellationToken);
                 }
 
@@ -112,8 +115,16 @@ namespace Ensek.PeteForrest.Services.Services
                 return (successes, validationFailures: failures);
             }, cancellationToken);
 
+            logger.LogDebug("Starting batch processing of meter readings with chunk size {ChunkSize}", chunkSize);
+
             await foreach (var line in readings.WithCancellation(cancellationToken))
             {
+                if (line.ParseErrors != ParseErrors.None)
+                {
+                    logger.LogInformation("Failed to parse meter reading on row {RowId}", line.RowId);
+                    continue;
+                }
+
                 await toBeParsedChannel.Writer.WriteAsync(line, cancellationToken);
             }
 
@@ -121,6 +132,9 @@ namespace Ensek.PeteForrest.Services.Services
             var parsingFailures = await parsingTask.WaitAsync(cancellationToken);
             toBeValidatedChannel.Writer.Complete();
             var (validationSuccesses, validationFailures) = await validationTask.WaitAsync(cancellationToken);
+            logger.LogInformation(
+                "Batch processing completed. Successes: {SuccessCount}, Parsing Failures: {ParsingFailures}, Validation Failures: {ValidationFailures}",
+                validationSuccesses, parsingFailures, validationFailures);
 
             return (validationSuccesses, parsingFailures + validationFailures);
         }
@@ -145,32 +159,13 @@ namespace Ensek.PeteForrest.Services.Services
             {
                 if (!accountCache.TryGetValue(reading.MeterReading.AccountId, out var account))
                 {
+                    logger.LogInformation("Account {AccountId} not found for reading on row {RowId}",
+                        reading.MeterReading.AccountId, reading.RowId);
                     failures++;
                     continue;
                 }
 
-                var validationFailed = false;
-                using var cancellationTokenSource = new CancellationTokenSource();
-                try
-                {
-                    await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
-                        async (meterReadingValidator, ct) =>
-                        {
-                            var validationResult =
-                                await meterReadingValidator.ValidateAsync(reading.MeterReading, account, ct);
-                            if (validationResult.IsValid) return;
-                            await cancellationTokenSource.CancelAsync();
-                            validationFailed = true;
-                        });
-                }
-                catch (OperationCanceledException)
-                {
-                    // If the task was cancelled, we assume validation failed
-                    failures++;
-                    continue;
-                }
-
-                if (validationFailed)
+                if (!await ValidateReadingAsync(reading, account))
                 {
                     failures++;
                     continue;
@@ -178,10 +173,39 @@ namespace Ensek.PeteForrest.Services.Services
 
                 meterReadingRepository.Add(reading.MeterReading);
                 account.CurrentMeterReading = reading.MeterReading;
+                logger.LogDebug("Successfully added meter reading from row {RowId} for account {AccountId}",
+                    reading.RowId, account.AccountId);
                 successes++;
             }
 
             return (failures, successes);
+        }
+
+        private async Task<bool> ValidateReadingAsync(ParsedMeterReading parsedMeterReading, Account account)
+        {
+            var validationFailed = false;
+            using var cancellationTokenSource = new CancellationTokenSource();
+            try
+            {
+                await Parallel.ForEachAsync(meterReadingValidators, cancellationTokenSource.Token,
+                    async (meterReadingValidator, ct) =>
+                    {
+                        var validationResult =
+                            await meterReadingValidator.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
+                        if (validationResult.IsValid) return;
+                        logger.LogInformation("Validation failed for reading on row {RowId}: {ValidationError}",
+                            parsedMeterReading.RowId, validationResult.Error);
+                        await cancellationTokenSource.CancelAsync();
+                        validationFailed = true;
+                    });
+            }
+            catch (OperationCanceledException)
+            {
+                // If the task was cancelled, we assume validation failed
+                return false;
+            }
+
+            return !validationFailed;
         }
     }
 }
