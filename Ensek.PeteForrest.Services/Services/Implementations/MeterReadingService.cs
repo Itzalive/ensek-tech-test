@@ -186,7 +186,7 @@ namespace Ensek.PeteForrest.Services.Services
             foreach (var validationRule in meterReadingValidators)
             {
                 var validationResult =
-                    await validationRule.ValidateAsync(parsedMeterReading.MeterReading, account, ct);
+                    await validationRule.ValidateAsync(parsedMeterReading.MeterReading, account);
                 if (validationResult.IsValid) continue;
                 logger.LogWarning("Validation failed for reading on row {RowId}: {ValidationError}",
                     parsedMeterReading.RowId, validationResult.Error);

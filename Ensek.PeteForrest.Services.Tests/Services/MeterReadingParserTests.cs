@@ -1,5 +1,5 @@
 using Ensek.PeteForrest.Services.Model;
-using Ensek.PeteForrest.Services.Services;
+using Ensek.PeteForrest.Services.Services.Implementations;
 
 namespace Ensek.PeteForrest.Services.Tests.Services;
 
