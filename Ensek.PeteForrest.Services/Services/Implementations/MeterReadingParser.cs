@@ -8,11 +8,12 @@ namespace Ensek.PeteForrest.Services.Services.Implementations;
 internal class MeterReadingParser : IMeterReadingParser
 {
     private readonly CultureInfo _gbCulture = CultureInfo.CreateSpecificCulture("en-gb");
-    public bool TryParse(MeterReadingLine reading, out ParsedMeterReading parsedMeterReading)
+
+    public bool TryParse(MeterReadingLine reading, out ParsedMeterReading parsedReading)
     {
         if (!reading.AccountId.HasValue)
         {
-            parsedMeterReading = null!;
+            parsedReading = null!;
             return false;
         }
 
@@ -22,7 +23,7 @@ internal class MeterReadingParser : IMeterReadingParser
                 out var dateTime) && !DateTime.TryParse(reading.MeterReadingDateTime, CultureInfo.InvariantCulture,
                 out dateTime))
         {
-            parsedMeterReading = null!;
+            parsedReading = null!;
             return false;
         }
 
@@ -30,11 +31,11 @@ internal class MeterReadingParser : IMeterReadingParser
         if (string.IsNullOrEmpty(reading.MeterReadValue) ||
             !MeterReading.TryParseValue(reading.MeterReadValue, out var intValueResult))
         {
-            parsedMeterReading = null!;
+            parsedReading = null!;
             return false;
         }
 
-        parsedMeterReading = new ParsedMeterReading
+        parsedReading = new ParsedMeterReading
         {
             RowId = reading.RowId,
             MeterReading = new MeterReading
