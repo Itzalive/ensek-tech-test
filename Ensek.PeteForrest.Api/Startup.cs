@@ -35,8 +35,6 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     }
     
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
-        CreateDbIfNotExists(app);
-
         if (env.IsDevelopment())
         {
             app.UseSwagger();
@@ -51,21 +49,5 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         
         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
-    }
-
-    private static void CreateDbIfNotExists(IApplicationBuilder app)
-    {
-        using var scope = app.ApplicationServices.CreateScope();
-        var services = scope.ServiceProvider;
-        try
-        {
-            var context = services.GetRequiredService<MeterContext>();
-            DbInitializer.Initialize(context);
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred creating the DB.");
-        }
     }
 }

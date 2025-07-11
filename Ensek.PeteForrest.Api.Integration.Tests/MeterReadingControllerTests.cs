@@ -4,10 +4,11 @@ using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Services.Model;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Xunit;
 
 namespace Ensek.PeteForrest.Api.Tests;
 
-public class MeterReadingControllerIntegrationTests(ApiHostFixture apiHostFixture) : IClassFixture<ApiHostFixture>
+public class MeterReadingControllerTests(ApiHostFixture apiHostFixture) : IClassFixture<ApiHostFixture>
 {
     [Fact]
     public async Task CanReadExampleCsv()

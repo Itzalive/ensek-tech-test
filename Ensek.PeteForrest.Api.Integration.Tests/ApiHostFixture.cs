@@ -29,9 +29,8 @@ namespace Ensek.PeteForrest.Api.Tests {
             // Create the schema and seed some data
             this.Context = new MeterContext(_contextOptions);
             this.Context.Database.EnsureCreated();
-            DbInitializer.InsertAccountsFromCsv(this.Context, "Data/Test_Accounts 2.csv");
+            AccountSeeder.InsertAccountsFromCsvAsync(this.Context, "Data/Test_Accounts 2.csv").GetAwaiter().GetResult();
         }
-
 
         private static readonly SemaphoreSlim Mutex = new(1, 1);
 

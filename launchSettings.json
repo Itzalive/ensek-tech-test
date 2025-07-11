@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "api": "StartDebugging"
+      },
+      "sslPort": 3009,
+      "httpPort": 3008,
+      "useSSL": true
+    }
+  }
+}

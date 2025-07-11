@@ -1,0 +1,26 @@
+services:
+  api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    ports: !override
+      - "3008:8080"
+      - "3009:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - db-seeder
+
+  db-seeder:
+    build:
+      context: .
+      dockerfile: Ensek.PeteForrest.Db.Creater/Dockerfile
+    environment:
+        - ASPNETCORE_ENVIRONMENT=Development
+        - ConnectionStrings__DefaultConnection=Server=db;Database=EnsekPeteForrest;User=sa;Password=Your_password123;TrustServerCertificate=True;
+    depends_on:
+        - db

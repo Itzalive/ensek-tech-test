@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Ensek.PeteForrest.Db.Creater": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
