@@ -1,4 +1,4 @@
-﻿using Ensek.PeteForrest.Api;
+﻿using Ensek.PeteForrest.Db.Creater;
 using Ensek.PeteForrest.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

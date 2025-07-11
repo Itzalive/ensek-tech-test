@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Ensek.PeteForrest.Api.Tests;
+namespace Ensek.PeteForrest.Api.Integration.Tests;
 
 public class MeterReadingControllerTests(ApiHostFixture apiHostFixture) : IClassFixture<ApiHostFixture>
 {
@@ -126,13 +126,13 @@ public class MeterReadingControllerTests(ApiHostFixture apiHostFixture) : IClass
         Assert.Equal(1, result.NumberOfSuccessfulReadings);
         Assert.Equal(0, result.NumberOfFailedReadings);
 
-        var accountResult = apiHostFixture.Context.Accounts.Include(a => a.CurrentMeterReading)
+        var accountResult = await apiHostFixture.Context.Accounts.Include(a => a.CurrentMeterReading)
                                                            .Include(a => a.MeterReadings)
-                                                           .SingleOrDefault(a => a.AccountId == entity.AccountId);
+                                                           .SingleOrDefaultAsync(a => a.AccountId == entity.AccountId);
         Assert.NotNull(accountResult);
         Assert.NotNull(accountResult.CurrentMeterReading);
         Assert.Single(accountResult.MeterReadings);
         Assert.Equal(01002, accountResult.CurrentMeterReading.Value);
-        Assert.Equal(new DateTime(2019, 04, 22, 9, 25, 00), accountResult.CurrentMeterReading.DateTime);
+        Assert.Equal(new DateTime(2019, 04, 22, 9, 25, 00, DateTimeKind.Utc), accountResult.CurrentMeterReading.DateTime);
     }
 }

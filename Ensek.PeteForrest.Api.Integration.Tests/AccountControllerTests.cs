@@ -3,7 +3,7 @@ using Ensek.PeteForrest.Domain;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Ensek.PeteForrest.Api.Tests {
+namespace Ensek.PeteForrest.Api.Integration.Tests {
     public class AccountControllerTests(ApiHostFixture apiHostFixture) : IClassFixture<ApiHostFixture>
     {
         [Fact]

@@ -1,10 +1,8 @@
-using System.Globalization;
-using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using nietras.SeparatedValues;
 
-namespace Ensek.PeteForrest.Api;
+namespace Ensek.PeteForrest.Db.Creater;
 
 public static class AccountSeeder
 {
@@ -12,7 +10,7 @@ public static class AccountSeeder
     {
         if (await context.Accounts.AnyAsync()) return false;
         
-        using var transaction = await context.Database.BeginTransactionAsync();
+        await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
             await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT dbo.Accounts ON");

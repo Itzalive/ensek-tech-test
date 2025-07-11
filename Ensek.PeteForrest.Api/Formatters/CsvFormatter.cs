@@ -28,11 +28,11 @@ namespace Ensek.PeteForrest.Api.Formatters
             Encoding encoding)
         {
             var httpContext = context.HttpContext;
-            var result = ReadRecordsAsync(httpContext.Request.Body, encoding);
+            var result = ReadRecordsAsync(httpContext.Request.Body);
             return await InputFormatterResult.SuccessAsync(result);
         }
 
-        private async IAsyncEnumerable<T> ReadRecordsAsync(Stream stream, Encoding encoding)
+        private async IAsyncEnumerable<T> ReadRecordsAsync(Stream stream)
         {
             using var reader = await new Sep(',').Reader(o => o with
             {
