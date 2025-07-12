@@ -33,23 +33,27 @@ Use Docker Compose (can be launched via Visual Studio for debugging):
 
 ## Review Feedback
 
-1. **Validation Rule Structure**
+1. **Service implementation is already large**
+
+    The implementation in the service class is already feeling larger than I'd like - I think I'd make this more specific to adding readings. Adding other 'service' methods in future would make the class even bigger than it already is.
+
+2. **Validation Rule Structure**
 
     The method that iterates over all validation rules in IMeterReadingService could be abstracted into its own interface or service, such as I...Validator. Existing rules could then implement a more specific I...ValidatorRule interface for better separation of concerns and extensibility.
 
-2. **Validation Rule Extensibility**
+3. **Validation Rule Extensibility**
 
     While the validation framework is designed to be extensible, only one rule currently exists. This might be a case of YAGNI (You Aren’t Gonna Need It). Additionally, the use of an asynchronous interface for extensibility may be premature; although, a ValueTask should be as light weight as possible. A discussion with the product team could help clarify the expected future direction.
 
-3. **Value Parsing Logic**
+4. **Value Parsing Logic**
 
     The value parsing method is currently the only logic residing on the model. It was decided to be placed on the model for maximum reusability. It might be more appropriate to move this to the parser service to consolidate all parsing logic in one place.
 
-3. **End-to-End Testing**
+5. **End-to-End Testing**
 
     Adding E2E tests using Docker Compose with a real SQL database is possible and would be beneficial. This would provide more accurate test coverage compared to the current SQLite-based tests.
 
-4. **Database Creator Utility**
+6. **Database Creator Utility**
 
     There’s potential to evolve the database creator into a more general-purpose, verb-based command-line utility. This could improve flexibility and usability for future use cases.
 
