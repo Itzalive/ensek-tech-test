@@ -1,6 +1,7 @@
 ﻿using Ensek.PeteForrest.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ensek.PeteForrest.Infrastructure.Behaviours

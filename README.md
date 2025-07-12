@@ -19,9 +19,9 @@ A simple REST API for uploading meter readings. (Readme re-written using AI, wit
 - **Optimized DB Access**:
   - Reads processed in chunks of 2000 to reduce DB calls.
   - 'de-duplication' logic has been implemented as part of the 'must be newer' logic. If the reading is distinctly newer than the previous reading we know it must not be a duplicate
-  - Account data cached per request to minimize DB hits.
+  - Account data decided not to cache between chunks. Although this increases DB hits, the chance of multiple readings for the same account in the same request is expected to be relatively low.
 - **Structured Logging**: Detailed, structured logs for easy debugging and monitoring in production.
-- **Transactional Middleware**: Ensures atomicity of each request. (Although, may want to separate processing of large files into multiple transactions in future)
+- **DB Transaction Abstraction**: Separates infrastrucure concerns from application implementation.
 - **Integration Tests**: Uses `TestHost` and in-memory SQLite database for fast, isolated testing.
 - **Layered Architecture**: Solution structure enforces internal implementations per layer, promoting encapsulation and maintainability.
 

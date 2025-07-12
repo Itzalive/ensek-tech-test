@@ -1,5 +1,6 @@
 ﻿using Ensek.PeteForrest.Domain;
 using Ensek.PeteForrest.Domain.Repositories;
+using Ensek.PeteForrest.Services.Infrastructure;
 using Ensek.PeteForrest.Services.Model;
 using Ensek.PeteForrest.Services.Models;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,7 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
         IAccountRepository accountRepository,
         IMeterReadingRepository meterReadingRepository,
         IMeterReadingParser meterReadingParser,
+        IUnitOfWorkFactory unitOfWorkFactory,
         IEnumerable<IMeterReadingValidator> meterReadingValidators,
         ILogger<IMeterReadingService> logger)
         : IMeterReadingService
@@ -53,7 +55,6 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
             const int chunkSize = 2000;
             var successes = 0;
             var failures = 0;
-            var seenAccounts = new Dictionary<int, Account>();
             await foreach (var readingChunk in readings.Chunk(chunkSize).WithCancellation(cancellationToken))
             {
                 var parsedReadings = new List<ParsedMeterReading>(chunkSize);
@@ -76,34 +77,39 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
                     parsedReadings.Add(parsedMeterReading);
                 }
 
-                var (newSuccesses, newFailures) = await ValidateAndAddMeterReadings(parsedReadings, seenAccounts);
-                failures += newFailures;
-                successes += newSuccesses;
+                await using var unitOfWork = unitOfWorkFactory.Create();
+                try
+                {
+                    var (newSuccesses, newFailures) = await ValidateAndAddMeterReadings(parsedReadings);
+                    failures += newFailures;
+                    successes += newSuccesses;
+                }
+                catch
+                {
+                    await unitOfWork.RollbackAsync();
+                    failures += parsedReadings.Count;
+                }
             }
 
             return (successes, failures);
         }
 
         private async Task<(int Successes, int Failures)> ValidateAndAddMeterReadings(
-            List<ParsedMeterReading> parsedMeterReadings, Dictionary<int, Account> accountCache)
+            List<ParsedMeterReading> parsedMeterReadings)
         {
             var successes = 0;
             var failures = 0;
             if (parsedMeterReadings is not { Count: not 0 }) return (0, 0);
-            var newlyRequestedAccountIds = parsedMeterReadings.Select(r => r.MeterReading.AccountId)
-                .Distinct().Where(id => !accountCache.ContainsKey(id)).ToList();
+            var newlyRequestedAccountIds = parsedMeterReadings.Select(r => r.MeterReading.AccountId).Distinct().ToList();
 
             // NOTE: There is a SQL parameter limit on number of account ids that can be passed in at once of 2100,
             // but we've chunked the readings so will not surpass that.
-            var newAccounts = await accountRepository.GetAsync(newlyRequestedAccountIds);
-            foreach (var account in newAccounts)
-            {
-                accountCache.Add(account.AccountId, account);
-            }
+            var accounts = await accountRepository.GetAsync(newlyRequestedAccountIds);
+            var accountLookup = accounts.ToDictionary(a => a.AccountId);
 
             foreach (var reading in parsedMeterReadings)
             {
-                if (!accountCache.TryGetValue(reading.MeterReading.AccountId, out var account))
+                if (!accountLookup.TryGetValue(reading.MeterReading.AccountId, out var account))
                 {
                     logger.LogWarning("Account {AccountId} not found for reading on row {RowId}",
                         reading.MeterReading.AccountId, reading.RowId);
@@ -123,7 +129,6 @@ namespace Ensek.PeteForrest.Services.Services.Implementations
                     reading.RowId, account.AccountId);
                 successes++;
             }
-
             return (successes, failures);
         }
 
